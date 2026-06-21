@@ -1,0 +1,8 @@
+data_pipeline:
+  tickers:
+    - "AAPL"       # Apple
+    - "MSFT"       # Microsoft
+    - "NVDA"       # NVIDIA
+  start_date: "2016-01-01"
+  end_date: "2026-01-01"
+  db_path: "data/financial_market.db"

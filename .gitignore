@@ -1,0 +1,11 @@
+# exclude python cache files
+__pycache__/
+*.pyc
+
+# exclue SQLite database file that we will collect in local ()
+data/*.db
+
+# exclude model weights file, virtual env file
+.venv/
+saved_models/*.pt
+saved_models/*.onnx
