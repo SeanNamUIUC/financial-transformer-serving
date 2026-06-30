@@ -62,22 +62,38 @@ def collect_store_data(config):
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
             df = df.reset_index()
+            df.columns = [col.lower() for col in df.columns]
             print(df.columns)
 
             clean_df = pd.DataFrame()
-            clean_df['date'] = df['Date'].dt.strftime('%Y-%m-%d')
+            clean_df['date'] = df['date'].dt.strftime('%Y-%m-%d')
             clean_df['ticker'] = ticker
-            clean_df['open'] = df['Open'].astype(float)
-            clean_df['high'] = df['High'].astype(float)
-            clean_df['low'] = df['Low'].astype(float)
-            clean_df['close'] = df['Close'].astype(float)
-            clean_df['adj_close'] = df['Close'].astype(float)
-            clean_df['volume'] = df['Volume'].astype(int)
+            clean_df['open'] = df['open'].astype(float)
+            clean_df['high'] = df['high'].astype(float)
+            clean_df['low'] = df['low'].astype(float)
+            clean_df['close'] = df['close'].astype(float)
+            clean_df['adj_close'] = df['close'].astype(float) # no adj close in current yfinance data
+            clean_df['volume'] = df['volume'].astype(int)
 
-            # push into db (duplicate data: replace or ignore)
-            clean_df.to_sql("daily_stock_prices", conn, if_exists="append", index=False)
+            #data update
+            cursor = conn.cursor()
+            
+            #upsert query
+            upsert_query = '''
+                INSERT OR REPLACE INTO daily_stock_prices (date, ticker, open, high, low, close, adj_close, volume)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            '''
+            
+            #data frame to data tuples -> ex) [('2016-01-04', 'TSLA' , 180.0 .......)]
+            data_tuples = list(clean_df.itertuples(index=False, name=None))
+            
+            # 3.(Bulk Insert)
+            cursor.executemany(upsert_query, data_tuples)
+            conn.commit()
+            # ==================================================================================
+            
             print("------------------------------------------------------------")
-            print(f" {ticker} saved: length:{len(clean_df)} ")
+            print(f" {ticker} saved/upserted 완료: length: {len(clean_df)} ")
             
         except Exception as e:
             print(f"failed to collect{ticker} : {e}")
@@ -92,5 +108,19 @@ if __name__ == "__main__":
     # testing code in codespaces
     config = load_config()
     collect_store_data(config)
+    # === [오후 사지방 전용: 내 눈으로 DB 데이터 확인하는 파이썬 스크립트] ===
+    print("\n" + "="*20 + " [DB Data " + "="*20)
+    db_path = config["data_pipeline"]["db_path"]
+    conn = sqlite3.connect(db_path)
+
+    db_check_df = pd.read_sql("SELECT * FROM daily_stock_prices LIMIT 5", conn)
+    print(db_check_df)
+    
+    # total stored rows
+    total_rows = conn.execute("SELECT COUNT(*) FROM daily_stock_prices").fetchone()
+    print(f"current total rows in db: {total_rows}개")
+    print("="*50 + "\n")
+    conn.close()
+    # =====================================================================
 
 
