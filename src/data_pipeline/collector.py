@@ -93,7 +93,7 @@ def collect_store_data(config):
             # ==================================================================================
             
             print("------------------------------------------------------------")
-            print(f" {ticker} saved/upserted 완료: length: {len(clean_df)} ")
+            print(f" {ticker} saved/upserted finished: length: {len(clean_df)} ")
             
         except Exception as e:
             print(f"failed to collect{ticker} : {e}")
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     # testing code in codespaces
     config = load_config()
     collect_store_data(config)
-    # === [오후 사지방 전용: 내 눈으로 DB 데이터 확인하는 파이썬 스크립트] ===
+    
     print("\n" + "="*20 + " [DB Data " + "="*20)
     db_path = config["data_pipeline"]["db_path"]
     conn = sqlite3.connect(db_path)
