@@ -8,7 +8,7 @@ class FinancialDataset(Dataset):
     def __init__ (self, db_path ,ticker, window_size = 20):
         self.window_size = window_size
 
-        #load data from db
+        #1. load data from db
         conn = sqlite3.connect(db_path)
         extract_data_query = f"select date, open, high , low , close, volume from daily_stock_prices where ticker = '{ticker}' order by date asc"
         df = pd.read_sql(extract_data_query, conn)
@@ -17,15 +17,51 @@ class FinancialDataset(Dataset):
         # print(df.shape)
         # print(df.head())
 
-        #moving average -> NAN for first few data due to window
+        #2. moving average -> NAN for first few data due to window
         df['ma_5'] = df['close'].rolling(window=5).mean()
         # print(df['close'].shape)
         # print(df['ma_5'].head())
         df['ma_20'] = df['close'].rolling(window=20).mean()
 
-        #RSI (14days ) -> NAN for first data due to diff
+        #3.RSI calculation (14days ) -> NAN for first data due to diff
+        # -> type -> series
         delta = df['close'].diff()
-        # print(delta)
+        # print(type(delta))
+        up = delta.clip(lower=0)
+        down = -delta.clip(upper=0)
+        #14days based average gain and loss
+        A_G = up.rolling(window=14).mean()
+        A_L = down.rolling(window=14).mean()
+
+        #Relative Strength -> RS
+        RS = A_G / (A_L + 1e-10)
+        #Relative Strength Index -> RSI
+        df['rsi'] = 100 - (100/ (1 + RS))
+
+        #RSI >= 70 -> time to sell(Overbought) , RSI <= 30 -> time to buy (Oversold)
+
+        #4 Design deeplearning input features
+        price_cols = ['open', 'high', 'low', 'close']
+        moving_average_cols = ['ma_5', 'ma_20']
+        df[price_cols] = df[price_cols].pct_change()
+        df[moving_average_cols] = df[moving_average_cols].pct_change()
+        df['volume'] = df['volume'].pct_change()
+        df['rsi'] = df['rsi'] / 100.0
+        print(len(df[df['rsi'] > 0.5]))
+
+        #first few data will be lost ->  
+        # 내가 궁금한점: Does losing the first few data points actually affect the performance of our predictive model in practice?
+        df = df.dropna().reset_index(drop = True)
+        print(df)
+        feature_cols = ['open', 'high', 'low', 'close', 'ma_5', 'ma_20', 'volume' ,'rsi']
+        print(df[feature_cols].shape)
+        #change to pytorch tensor (input features for my deep learning model)
+        self.features = torch.tensor(df[feature_cols].values, dtype=torch.float32)
+        self.labels = torch.tensor(df['close'].values, dtype=torch.float32)
+        print(f'features shape is {self.features.shape}')
+        print(self.labels.shape)
+
+        
 
 
 
@@ -34,4 +70,4 @@ if __name__ == "__main__":
     db_path = "data/financial_market.db" 
     
     if os.path.exists(db_path):
-        dataset = FinancialDataset(db_path, ticker="AAPL", window_size=20)
+        # dataset = FinancialDataset(db_path, ticker="AAPL", window_size=20)

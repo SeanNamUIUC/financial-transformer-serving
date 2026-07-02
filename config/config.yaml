@@ -5,6 +5,6 @@ data_pipeline:
     - "NVDA"       # nvidia
     - "GOOGL"       # google
     - "AMZN"       # amazon
-  start_date: "2006-01-01"
+  start_date: "2016-01-01"
   end_date: "2026-01-01"
   db_path: "data/financial_market.db"
