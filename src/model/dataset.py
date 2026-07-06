@@ -47,7 +47,7 @@ class FinancialDataset(Dataset):
         df[moving_average_cols] = df[moving_average_cols].pct_change()
         df['volume'] = df['volume'].pct_change()
         df['rsi'] = df['rsi'] / 100.0
-        print(len(df[df['rsi'] > 0.5]))
+        print(len(df[df['rsi'] >= 0.7]))
 
         #first few data will be lost ->  
         # 내가 궁금한점: Does losing the first few data points actually affect the performance of our predictive model in practice?
@@ -61,13 +61,29 @@ class FinancialDataset(Dataset):
         print(f'features shape is {self.features.shape}')
         print(self.labels.shape)
 
+    def __len__(self):
+        return len(self.features) - self.window_size
+    def __getitem__(self, idx):
+        #
+        X = self.features[idx: idx + self.window_size]
+
+        y = self.labels[idx + self.window_size]
+        return X , y
         
 
 
-
+#Raw data(DB) -> pandas(5011, 8) -> Dataset(__getitem__) -> DataLoader(Batch) -> Transformer_model input[32,20,8]
 if __name__ == "__main__":
     import os
     db_path = "data/financial_market.db" 
     
     if os.path.exists(db_path):
-        # dataset = FinancialDataset(db_path, ticker="AAPL", window_size=20)
+        #make custom dataset we created
+        dataset = FinancialDataset(db_path, ticker="AAPL", window_size=20)
+        #32 batch size for gpu processing , shuffle=False to prevent breaking time sequence
+        dataloader = DataLoader(dataset, batch_size = 32, shuffle=False)
+        #we have to think about last batch
+        for X_batch, y_batch in dataloader:
+            print(f"deeplearning input (X_batch) : {X_batch.shape}") #[32, 20, 8]
+            print(f"deeplearning label (y_batch) : {y_batch.shape}") #[32]
+            break 
