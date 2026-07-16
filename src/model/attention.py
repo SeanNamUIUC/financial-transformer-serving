@@ -5,7 +5,7 @@ class MultiHeadedSelfAttention(nn.Module):
 
     def __init__(self, embedding_dim: int, attention_dim: int, num_heads: int):
         super().__init__()
-        torch.manual_seed(0)
+        
         # Create num_heads SingleHeadAttention instances using nn.ModuleList
         # Each head size = attention_dim // num_heads
         # Use: self.SingleHeadAttention(embedding_dim, head_size)
@@ -33,11 +33,10 @@ class MultiHeadedSelfAttention(nn.Module):
 
     #[B,T,A]
     class SingleHeadAttention(nn.Module):
-        #__init__ 학습을 통해 값이 계속 변하고 유지되어야 하는 레이어. 모델 전체에서 고정되어 쓰이는 부분 (ex_ weight matrix)
         #Embedding_dim = E, attention_dim = A
         def __init__(self, embedding_dim, attention_dim):
             super().__init__()
-            torch.manual_seed(0)
+            
             #to use it as a gloabal variable in forward function
             self.attention_dim = attention_dim
             # Create three linear projections (Key, Query, Value) with bias=False

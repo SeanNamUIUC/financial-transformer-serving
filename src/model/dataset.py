@@ -56,11 +56,23 @@ class FinancialDataset(Dataset):
         feature_cols = ['open', 'high', 'low', 'close', 'ma_5', 'ma_20', 'volume' ,'rsi']
         print(df[feature_cols].shape)
         #change to pytorch tensor (input features for my deep learning model)
+        #change to pytorch tensor (input features for my deep learning model)
         self.features = torch.tensor(df[feature_cols].values, dtype=torch.float32)
-        self.labels = torch.tensor(df['close'].values, dtype=torch.float32)
+        
+        # 내일 종가 변동률을 기반으로 3개 클래스 라벨링 자동 생성
+        # 변동률 수치(float)를 받아서 정수형 라벨(0, 1, 2) 배열로 매핑합니다.
+        close_pct = df['close'].values
+        labels_np = np.ones(len(close_pct), dtype=np.int64) # 기본값: 1 (관망)
+        
+        labels_np[close_pct >= 0.005] = 2  # 내일 종가가 0.5% 이상 오르면 매수(2)
+        labels_np[close_pct <= -0.005] = 0 # 내일 종가가 -0.5% 이하로 떨어지면 매도(0)
+        
+        # 분류(CrossEntropy) 오차 연산용 정수형 LongTensor 변환
+        self.labels = torch.tensor(labels_np, dtype=torch.long)
+        
         print(f'features shape is {self.features.shape}')
-        print(self.labels.shape)
-
+        print(f'labels shape is {self.labels.shape}') # 모양은 여전히 [5011], 그러나 내부는 0, 1, 2 정수형!
+        
     def __len__(self):
         return len(self.features) - self.window_size
     def __getitem__(self, idx):
