@@ -45,7 +45,7 @@ def collect_store_data(config):
     conn = sqlite3.connect(db_path)
     
     for ticker in tickers:
-        print(f"Collecting data {ticker}... ({start_date} ~ {end_date})")
+        # print(f"Collecting data {ticker}... ({start_date} ~ {end_date})")
 
         try:
             df = yf.download(ticker, start = start_date , end = end_date)
@@ -63,7 +63,7 @@ def collect_store_data(config):
                 df.columns = df.columns.get_level_values(0)
             df = df.reset_index()
             df.columns = [col.lower() for col in df.columns]
-            print(df.columns)
+            # print(df.columns)
 
             clean_df = pd.DataFrame()
             clean_df['date'] = df['date'].dt.strftime('%Y-%m-%d')

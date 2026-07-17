@@ -1,10 +1,10 @@
 data_pipeline:
   tickers:
     - "AAPL"       # apple
-    - "MSFT"       #  microsoft
-    - "NVDA"       # nvidia
-    - "GOOGL"       # google
-    - "AMZN"       # amazon
-  start_date: "2016-01-01"
+    # - "MSFT"       #  microsoft
+    # - "NVDA"       # nvidia
+    # - "GOOGL"       # google
+    # - "AMZN"       # amazon
+  start_date: "2021-01-01"
   end_date: "2026-01-01"
   db_path: "data/financial_market.db"
