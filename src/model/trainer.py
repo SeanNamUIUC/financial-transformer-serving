@@ -9,6 +9,40 @@ class FinancialTrainer:
         self.device = device
         self.scaler = scaler
 
+    #4. pytorch profiling step4 -> only run 10steps and break
+    def profiling_epoch(self, train_loader, prof):
+        self.model.train()
+        for step, batch in enumerate(train_loader):
+            #pytorch profiler label 
+            with torch.profiler.record_function("transformer_total_step"):
+                (inputs, targets) = batch
+                (inputs, targets) = inputs.to(self.device), targets.to(self.device)
+                
+                # Actual training
+                if self.scaler and self.device.type == 'cuda':
+                    with torch.amp.autocast('cuda'):
+                        outputs = self.model(inputs)
+                        loss = self.criterion(outputs, targets)
+                    self.optimizer.zero_grad()
+                    self.scaler.scale(loss).backward()
+                    self.scaler.scale(self.optimizer)
+                    self.scaler.update()
+                else:
+                    outputs = self.model(inputs)
+                    loss = self.criterion(outputs, targets)
+                    self.optimizer.zero_grad()
+                    loss.backward()
+                    self.optimizer.step()
+            
+            #move on to the next step
+            prof.step()  
+            
+            # after 10steps we break to see the result
+            if step >= 10:
+                print(f"finished 10steps. Flush profililng and creating report....")
+                break
+
+
     def train_epoch(self, train_loader, epoch, epochs):
         #1epoch 동안 훈련담당
         self.model.train()#모델을 훈련모드로. nn.module 내의 training flag = True -> activate dropout function

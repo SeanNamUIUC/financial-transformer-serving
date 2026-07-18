@@ -9,6 +9,9 @@ from src.model.transformer_block import TransformerBlock
 from src.model.dataset import FinancialDataset 
 from src.model.trainer import FinancialTrainer
 
+#1. pytorch profiling step 1 -> Pytorch Profiler for performance measurement(record for future hardware acceleration part)
+from torch.profiler import profile , record_function, ProfilerActivity, schedule
+
 class UltimateFinancialTransformer(nn.Module):
     """
     A final end-to-end architecture based on Transformer Blocks, designed to process 
@@ -45,8 +48,8 @@ class UltimateFinancialTransformer(nn.Module):
 
 def train_financial_engine():
 
-    torch.manual_seed(0)
-    torch.cuda.manual_seed_with_all(0)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed_all(42)
     
     print("="*60)
     print("Injecting financial data and launching 24-Layer Transformer")
@@ -78,16 +81,51 @@ def train_financial_engine():
     # Mixed Precision (FP16) scaler
     scaler = torch.amp.GradScaler('cuda') if device.type == 'cuda' else None
     
+
+    #2. pytorch profiling step 2 -> Define profiler schedule
+    profiler_schedule = schedule (
+        skip_first = 3,
+        wait = 1,
+        warmup = 1,
+        active = 2,
+        repeat = 1
+    )
+    print(f"\n Start profiling ➔ device: {device.type.upper()}")
     # training
     trainer = FinancialTrainer(model, criterion, optimizer, device, scaler)
-    epochs = 5
-    for epoch in range(epochs):
-        avg_loss, epoch_time = trainer.train_epoch(train_loader, epoch, epochs)
-        print(f"Epoch [{epoch+1}/{epochs}] finished! average Loss: {avg_loss:.4f} | total time: {epoch_time:.2f}seconds")
-        print("-"*60)
 
-    print("\nfinished training!")
-    print("="*60)
+    #3. pytorch profiling step3 -> analyze calculation from cpu, schedule, memory and tensor shapes
+    with profile (
+        activities = [ProfilerActivity.CPU],#currently using CPU since using github codespace 
+        schedule = profiler_schedule,
+        profile_memory=False,
+        record_shapes=False
+    ) as prof:
+#Profiling_epoch
+        trainer.profiling_epoch(train_loader, prof)
+
+    #4. pytorch profiling step4 -> hardware report file
+    output_path = "docs/profiling_raw_cpu.txt"
+    with open(output_path, "w", encoding="utf-8") as f:
+        report_table = prof.key_averages().table(
+            sort_by="self_cpu_time_total", 
+            row_limit=10  
+        )
+        f.write(report_table)
+        f.flush() 
+    print("finished profiling!!")
+
+    
+
+#Train_epoch 
+    # epochs = 5
+    # for epoch in range(epochs):
+    #     avg_loss, epoch_time = trainer.train_epoch(train_loader, epoch, epochs)
+    #     print(f"Epoch [{epoch+1}/{epochs}] finished! average Loss: {avg_loss:.4f} | total time: {epoch_time:.2f}seconds")
+    #     print("-"*60)
+
+    # print("\nfinished training!")
+    # print("="*60)
 
 if __name__ == "__main__":
     train_financial_engine()
