@@ -11,17 +11,17 @@ financial-transformer-serving/
 │   ├── model_export.py            # Weights extractor & INT8 Quantization utility from PyTorch to Binary
 │   ├── include/                   # Header files for memory map & custom kernels
 │   │   ├── tensor.hpp             # High-performance 1D Row-major physical contiguous memory tensor
-│   │   ├── graph_compiler.hpp     # Computational Graph Analyzer for Operator Fusion optimization
-│   │   ├── device_driver.hpp      # MMIO register control & Zero-Copy DMA memory mapping virtual driver
-│   │   ├── pim_kernel.hpp         # High-speed GEMM (Matrix Multiplication) & hardware-accelerated kernels
-│   │   └── quantization.hpp       # Scaling & clipping utilities for overflow-controlled INT8 inference
-│   └── src/                       # Source code implementation for acceleration engines
-│       ├── tensor.cpp
-│       ├── graph_compiler.cpp
-│       ├── device_driver.cpp
-│       ├── pim_kernel.cpp
-│       └── main.cpp               # Latency profiling demo & benchmarking data injection script
-├── config/
+│   │   ├── gemm_accelerator.hpp   # [Targeting Compute-bound] CUDA kernel headers for massively parallel General Matrix Multiplication
+│   │   ├── fusion_engine.hpp      # [Targeting Memory-bound] Operator Fusion engine merging element-wise operations (sqrt, add, mul)
+│   │   ├── dma_channel.hpp        # [Targeting I/O Overhead] Virtual channel interface for Host-to-Device Zero-Copy DMA memory mapping
+│   │   └── quantization.hpp       # Scaling and clipping utilities optimized for accelerated INT8 inference
+│   └── src/                       # Source implementations for the core acceleration engines
+│       ├── tensor.cpp             # PyTorch tensor binding to raw C++ pointers and contiguous memory management
+│       ├── gemm_accelerator.cu    # Fast GEMM implementation via CUDA thread block scheduling and Tensor Core utilization 
+│       ├── fusion_engine.cu       # Operator Fusion implementation 
+│       ├── dma_channel.cpp        # Zero-Copy memory mapping logic to completely bypass explicit cudaMemcpy data transfer latencies
+│       └── main.cpp               # Benchmarking and latency profiling demonstration script with financial data injection
+├── config/ 
 │   └── config.yaml                # Data pipeline configurations and hyperparameter paths
 ├── data/
 │   └── financial_market.db        # Collected SQLite financial database (Isolated via .gitignore for scale)
