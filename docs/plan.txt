@@ -1,0 +1,3 @@
+Date                              Project                                                       Cuda
+7/19                              Transformer model profiler report(CPU based)                  
+7/20                              Tensor.hpp design (tensor class interface)                    GPU Architecture basics    
