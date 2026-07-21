@@ -12,7 +12,7 @@ class Tensor {
         ~Tensor(); //destructor
 
 
-        //copy constructor prevention
+        //copy constructor prevention -> to prvent doulbe free error 
         Tensor(const Tensor&) = delete;
         Tensor& operator=(const Tensor&) = delete;
 
@@ -24,17 +24,17 @@ class Tensor {
 
         //Hardware accssing interface
         //front const: no change for parameter we've taken vs back const: no revision for inner member variable
-        float* data() { return data_ptr; }
-        const float* data() const { return data_ptr; }
+        float* data() { return data_ptr_; }
+        const float* data() const { return data_ptr_; }
 
-        const std::vector<size_t>& shape() const { return shape; }
-        const std::vector<size_t>& strides() const { return strides; }
-        size_t size() const { return size; }
+        const std::vector<size_t>& shape() const { return shape_; }
+        const std::vector<size_t>& strides() const { return strides_; }
+        size_t size() const { return size_; }
     private:
-        float* data_ptr; //starting pointer of vram
-        std::vecotr<size_t> shape; //store each dimension ex) in our case: [32, 20, 8]
-        std::vector<size_t> strides; //A coefficient that contains the distance to skip in order to move to the next element in memory
-        size_t total_size;  // total number of elements
+        float* data_ptr_; //starting pointer of vram
+        std::vecotr<size_t> shape_; //store each dimension ex) in our case: [32, 20, 8]
+        std::vector<size_t> strides_; //A coefficient that contains the distance to skip in order to move to the next element in memory
+        size_t total_size_;  // total number of elements
 
         void compute_strides();//computing strides based on shape
 };
