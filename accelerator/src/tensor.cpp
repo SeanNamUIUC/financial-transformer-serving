@@ -1,4 +1,4 @@
-#include "tensor.hpp"
+#include "include/tensor.hpp"
 
 
 // Constructor
@@ -43,7 +43,7 @@ void Tensor::compute_strides() {
     // last dimension is always 1
     strides_[shape_size - 1] = 1;
 
-    // 역방향 순회: unsigned int underflow 방지 패턴
+    // strides computation
     for (size_t i = shape_size - 1; i > 0; --i) {
         strides_[i - 1] = shape_[i] * strides_[i];
     }
@@ -70,5 +70,7 @@ void Tensor::print_metadata() const {
     // 3. print additional information
     std::cout << "Total Elements: " << total_size_ << std::endl;
     std::cout << "Data Pointer: " << static_cast<void*>(data_ptr_) << std::endl;
+
+    
     std::cout << "=======================" << std::endl;
 }
